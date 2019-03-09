@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.EntityFrameworkCore;
+using AbrantosAPI.Services;
 
 namespace AbrantosAPI
 {
@@ -37,6 +38,8 @@ namespace AbrantosAPI
 
             services.AddDbContext<AbrantosContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
+            services.AddTransient<IDailyRegisterService, DailyRegisterService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
