@@ -22,7 +22,6 @@ namespace AbrantosAPI.Controllers
             _dailyRegisterService = dailyRegisterService;
         }
 
-        // GET api/values
         [HttpGet]
         public async Task<ActionResult> Get()
         {
@@ -45,7 +44,6 @@ namespace AbrantosAPI.Controllers
             }
         }
 
-        // GET api/values/5
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -68,7 +66,6 @@ namespace AbrantosAPI.Controllers
             }
         }
 
-        // POST api/values
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] CreateDailyRegisterViewModel dailyRegister)
         {
@@ -88,7 +85,6 @@ namespace AbrantosAPI.Controllers
             }
         }
 
-        // PUT api/values/5
         [HttpPut("{id}")]
         public async Task<IActionResult> Put(int id, [FromBody] UpdateDailyRegisterViewModel dailyRegister)
         {
@@ -113,7 +109,6 @@ namespace AbrantosAPI.Controllers
             }
         }
 
-        // DELETE api/values/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

@@ -14,6 +14,8 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.EntityFrameworkCore;
 using AbrantosAPI.Services;
+using Microsoft.AspNetCore.Identity;
+using AbrantosAPI.Models.User;
 
 namespace AbrantosAPI
 {
@@ -31,19 +33,26 @@ namespace AbrantosAPI
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.AddDbContext<AbrantosContext>(options =>
+                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDefaultIdentity<User>()
+                    .AddRoles<Role>()
+                    .AddEntityFrameworkStores<AbrantosContext>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new Info { Title = "Abrantos API", Version = "v0.0.1" });
             });
 
-            services.AddDbContext<AbrantosContext>(options =>
-                options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-
             services.AddTransient<IDailyRegisterService, DailyRegisterService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, 
+                                IHostingEnvironment env,
+                                AbrantosContext context,
+                                UserManager<User> userManager,
+                                RoleManager<Role> roleManager)
         {
             if (env.IsDevelopment())
             {
@@ -64,6 +73,9 @@ namespace AbrantosAPI
             });
 
             app.UseHttpsRedirection();
+            new IdentityInitializer(context, userManager, roleManager)
+                .Initialize().Wait();
+            app.UseAuthentication();
             app.UseMvc();
         }
     }
