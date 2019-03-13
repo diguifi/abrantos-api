@@ -35,9 +35,9 @@ namespace AbrantosAPI
 
             services.AddDbContext<AbrantosContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddDefaultIdentity<User>()
-                    .AddRoles<Role>()
-                    .AddEntityFrameworkStores<AbrantosContext>();
+            services.AddIdentity<User, Role>()
+                    .AddEntityFrameworkStores<AbrantosContext>()
+                    .AddDefaultTokenProviders();
 
             services.AddSwaggerGen(c =>
             {
