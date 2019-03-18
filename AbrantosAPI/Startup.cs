@@ -16,6 +16,9 @@ using Microsoft.EntityFrameworkCore;
 using AbrantosAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using AbrantosAPI.Models.User;
+using AbrantosAPI.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace AbrantosAPI
 {
@@ -33,6 +36,43 @@ namespace AbrantosAPI
         {
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            var signingConfigurations = new SigningConfigurations();
+            services.AddSingleton(signingConfigurations);
+            var tokenConfigurations = new TokenConfigurations();
+            new ConfigureFromConfigurationOptions<TokenConfigurations>(
+                Configuration.GetSection("TokenConfigurations"))
+                    .Configure(tokenConfigurations);
+            services.AddSingleton(tokenConfigurations);
+
+            services.AddAuthentication(authOptions =>
+            {
+                authOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                authOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(bearerOptions =>
+            {
+                var paramsValidation = bearerOptions.TokenValidationParameters;
+                paramsValidation.IssuerSigningKey = signingConfigurations.Key;
+                paramsValidation.ValidAudience = tokenConfigurations.Audience;
+                paramsValidation.ValidIssuer = tokenConfigurations.Issuer;
+
+                // Validates a received token signature
+                paramsValidation.ValidateIssuerSigningKey = true;
+
+                // Verifies if a received token is still valid
+                paramsValidation.ValidateLifetime = true;
+
+                // Tolerance time for token expiration (used if there are timezone differences)
+                paramsValidation.ClockSkew = TimeSpan.Zero;
+            });
+
+            // Activates token usage on this project
+            services.AddAuthorization(auth =>
+            {
+                auth.AddPolicy("Bearer", new AuthorizationPolicyBuilder()
+                    .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
+                    .RequireAuthenticatedUser().Build());
+            });
+
             services.AddDbContext<AbrantosContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
             services.AddIdentity<User, Role>()
@@ -41,7 +81,19 @@ namespace AbrantosAPI
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new Info { Title = "Abrantos API", Version = "v0.0.1" });
+                c.SwaggerDoc("v1", new Info {
+                    Title = "Abrantos API",
+                    Version = "v0.0.1"
+                });
+                c.AddSecurityDefinition("Bearer", new ApiKeyScheme {
+                    In = "header",
+                    Description = "Type 'Bearer' followed by the JWT to authorize",
+                    Name = "Authorization",
+                    Type = "apiKey"
+                });
+                c.AddSecurityRequirement(new Dictionary<string, IEnumerable<string>> {
+                    { "Bearer", Enumerable.Empty<string>() },
+                });
             });
 
             services.AddTransient<IDailyRegisterService, DailyRegisterService>();
@@ -65,7 +117,6 @@ namespace AbrantosAPI
             }
 
             app.UseSwagger();
-
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Abrantos API");

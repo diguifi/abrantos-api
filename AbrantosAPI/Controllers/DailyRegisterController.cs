@@ -5,10 +5,12 @@ using System.Threading.Tasks;
 using AbrantosAPI.Data;
 using AbrantosAPI.Models.Register;
 using AbrantosAPI.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AbrantosAPI.Controllers
 {
+    [Authorize("Bearer")]
     [Route("api/[controller]")]
     [ApiController]
     public class DailyRegisterController : ControllerBase
@@ -23,7 +25,7 @@ namespace AbrantosAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult> Get()
+        public async Task<ActionResult> GetAll()
         {
             try 
             {
@@ -45,7 +47,7 @@ namespace AbrantosAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             try 
             {
@@ -67,7 +69,7 @@ namespace AbrantosAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] CreateDailyRegisterViewModel dailyRegister)
+        public async Task<IActionResult> Create([FromBody] CreateDailyRegisterViewModel dailyRegister)
         {
             DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos, dailyRegister.Date);
 
@@ -86,7 +88,7 @@ namespace AbrantosAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] UpdateDailyRegisterViewModel dailyRegister)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateDailyRegisterViewModel dailyRegister)
         {
             DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos, dailyRegister.Date);
             mappedDailyRegister.Id = id;
