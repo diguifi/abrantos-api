@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 using AbrantosAPI.Authentication;
 using AbrantosAPI.Data;
 using AbrantosAPI.Models.Register;
-using AbrantosAPI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AbrantosAPI.Controllers
 {
@@ -18,23 +18,25 @@ namespace AbrantosAPI.Controllers
     public class DailyRegisterController : ControllerBase
     {
         private readonly AbrantosContext _context;
-        private readonly IDailyRegisterService _dailyRegisterService;
         private readonly IHttpContextAccessor _httpContext;
         public DailyRegisterController(AbrantosContext context,
-                                    IDailyRegisterService dailyRegisterService,
                                     IHttpContextAccessor httpContext)
         {
             _context = context;
-            _dailyRegisterService = dailyRegisterService;
             _httpContext = httpContext;
         }
 
         [HttpGet]
         public async Task<ActionResult> GetAll()
         {
+            var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try 
             {
-                var dailyRegisterList = await _dailyRegisterService.Get();
+                var dailyRegisterList = await _context.DailyRegister.Where(e => e.UserId == userId)
+                                                                    .ToListAsync();
+
+                if (dailyRegisterList == null)
+                    return NotFound();
 
                 return StatusCode(200, new
                 {
@@ -54,9 +56,14 @@ namespace AbrantosAPI.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
+            var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try 
             {
-                var dailyRegister = await _dailyRegisterService.Get(id);
+                var dailyRegister = await _context.DailyRegister.FirstOrDefaultAsync(e => (e.Id == id) &&
+                                                                                    (e.UserId == userId));
+
+                if (dailyRegister == null)
+                    return NotFound();
 
                 return StatusCode(200, new
                 {
@@ -81,11 +88,10 @@ namespace AbrantosAPI.Controllers
 
             try
             {
-                var result = await _dailyRegisterService.Create(mappedDailyRegister);
-                return StatusCode(200, new
-                {
-                    result
-                });
+                await _context.DailyRegister.AddAsync(mappedDailyRegister);
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
             catch(Exception e)
             {
@@ -96,16 +102,23 @@ namespace AbrantosAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateDailyRegisterViewModel dailyRegister)
         {
+            var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos, dailyRegister.Date, "");
             mappedDailyRegister.Id = id;
 
             try
             {
-                var result = await _dailyRegisterService.Update(mappedDailyRegister);
-                return StatusCode(200, new
-                {
-                    result
-                });
+                var oldRegister = await _context.DailyRegister.FirstOrDefaultAsync(e => (e.Id == id) &&
+                                                                                    (e.UserId == userId));
+                if (dailyRegister == null)
+                    return NotFound();
+
+                oldRegister.Abrantos = mappedDailyRegister.Abrantos;
+                oldRegister.Date = mappedDailyRegister.Date;
+                _context.DailyRegister.Update(oldRegister);
+                await _context.SaveChangesAsync();
+
+                return Ok();
             }
             catch(KeyNotFoundException e)
             {
@@ -120,9 +133,16 @@ namespace AbrantosAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
+            var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                await _dailyRegisterService.Delete(id);
+                var oldRegister = await _context.DailyRegister.FirstOrDefaultAsync(e => (e.Id == id) &&
+                                                                                    (e.UserId == userId));
+                if (oldRegister == null)
+                    return NotFound();
+
+                _context.DailyRegister.Remove(oldRegister);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             catch(KeyNotFoundException e)

@@ -13,7 +13,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.Swagger;
 using Microsoft.EntityFrameworkCore;
-using AbrantosAPI.Services;
 using Microsoft.AspNetCore.Identity;
 using AbrantosAPI.Models.User;
 using AbrantosAPI.Authentication;
@@ -101,7 +100,6 @@ namespace AbrantosAPI
             });
 
             services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-            services.AddTransient<IDailyRegisterService, DailyRegisterService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
