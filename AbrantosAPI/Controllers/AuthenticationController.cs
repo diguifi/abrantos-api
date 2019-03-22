@@ -143,11 +143,12 @@ namespace AbrantosAPI.Controllers
             
             if (validCredentials)
             {
-                ClaimsIdentity identity = new ClaimsIdentity(
+                ClaimsIdentity declarations = new ClaimsIdentity(
                     new GenericIdentity(userInDB.UserName, "Login"),
                     new[] {
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
                         new Claim(JwtRegisteredClaimNames.UniqueName, userInDB.UserName),
+                        new Claim("userid", userInDB.Id, ClaimValueTypes.String),
                         new Claim("username", userInDB.UserName, ClaimValueTypes.String),
                     }
                 );
@@ -162,7 +163,7 @@ namespace AbrantosAPI.Controllers
                     Issuer = tokenConfigurations.Issuer,
                     Audience = tokenConfigurations.Audience,
                     SigningCredentials = signingConfigurations.SigningCredentials,
-                    Subject = identity,
+                    Subject = declarations,
                     NotBefore = creationDate,
                     Expires = expirationDate
                 });

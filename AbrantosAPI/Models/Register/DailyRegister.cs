@@ -8,10 +8,13 @@ namespace AbrantosAPI.Models.Register
         public long Abrantos { get; set; }
         public DateTime Date { get; set; }
 
-        public DailyRegister(long abrantos, DateTime date)
+        public string UserId { get; set; }
+
+        public DailyRegister(long abrantos, DateTime date, string userId)
         {
             Abrantos = abrantos;
             Date = date;
+            UserId = userId;
         }
     }
 }

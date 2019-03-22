@@ -19,6 +19,9 @@ using AbrantosAPI.Models.User;
 using AbrantosAPI.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AbrantosAPI
 {
@@ -75,6 +78,7 @@ namespace AbrantosAPI
 
             services.AddDbContext<AbrantosContext>(options =>
                 options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
             services.AddIdentity<User, Role>()
                     .AddEntityFrameworkStores<AbrantosContext>()
                     .AddDefaultTokenProviders();
@@ -96,6 +100,7 @@ namespace AbrantosAPI
                 });
             });
 
+            services.TryAddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddTransient<IDailyRegisterService, DailyRegisterService>();
         }
 
