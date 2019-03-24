@@ -88,7 +88,14 @@ namespace AbrantosAPI.Controllers
 
             try
             {
-                await _context.DailyRegister.AddAsync(mappedDailyRegister);
+                var alreadyRegisteredToday = await _context.DailyRegister
+                                                                    .Where(d => d.Date.Day == mappedDailyRegister.Date.Day &&
+                                                                        (d.UserId == userId)).AnyAsync();
+
+                if (alreadyRegisteredToday)
+                    return StatusCode(400, "You already registered abrantos today");
+
+                _context.DailyRegister.Add(mappedDailyRegister);
                 await _context.SaveChangesAsync();
 
                 return Ok();
