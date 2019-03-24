@@ -95,6 +95,9 @@ namespace AbrantosAPI.Controllers
                 if (alreadyRegisteredToday)
                     return StatusCode(400, "You already registered abrantos today");
 
+                if ((mappedDailyRegister.Abrantos > 1000) || (mappedDailyRegister.Abrantos < -1000))
+                    return StatusCode(400, "Abrantos only range from -1000 to 1000");
+
                 _context.DailyRegister.Add(mappedDailyRegister);
                 await _context.SaveChangesAsync();
 
@@ -119,6 +122,9 @@ namespace AbrantosAPI.Controllers
                                                                                     (e.UserId == userId));
                 if (dailyRegister == null)
                     return NotFound();
+
+                if ((mappedDailyRegister.Abrantos > 1000) || (mappedDailyRegister.Abrantos < -1000))
+                    return StatusCode(400, "Abrantos only range from -1000 to 1000");
 
                 oldRegister.Abrantos = mappedDailyRegister.Abrantos;
                 oldRegister.Date = mappedDailyRegister.Date;
