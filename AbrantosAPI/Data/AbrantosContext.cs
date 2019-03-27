@@ -18,5 +18,6 @@ namespace AbrantosAPI.Data
     
 
     public DbSet<DailyRegister> DailyRegister { get; set; }
+    public DbSet<AspNetFriends> AspNetFriends { get; set; }
   } 
 }
