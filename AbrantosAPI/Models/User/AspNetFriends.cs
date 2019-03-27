@@ -6,5 +6,16 @@ namespace AbrantosAPI.Models.User
             public bool IsConfirmed { get; set; }
             public virtual User FriendFrom { get; set; }
             public virtual User FriendTo { get; set; }
+
+            public AspNetFriends()
+            {
+            }
+
+            public AspNetFriends(User friendFrom, User friendTo)
+            {
+                FriendFrom = friendFrom;
+                FriendTo = friendTo;
+                IsConfirmed = false;
+            }
     }
 }
