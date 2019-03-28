@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using AbrantosAPI.Data;
@@ -31,85 +32,156 @@ namespace AbrantosAPI.Controllers
         public async Task<IActionResult> GetFriends()
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
-            var friends = await _context.AspNetFriends.Include(e => e.FriendTo) 
-                                                    .Where(e => e.FriendFrom.Id == userId && e.IsConfirmed == true)
-                                                    .ToListAsync();
-
-            return StatusCode(200, new
+            try
             {
-                friends
-            });
+                var friends = await _context.AspNetFriends.Include(e => e.FriendTo) 
+                                                        .Where(e => e.FriendFrom.Id == userId && e.IsConfirmed == true)
+                                                        .ToListAsync();
+
+                return StatusCode(200, new
+                {
+                    friends
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, "Internal error:" + e.Message);
+            }
+            
         }
 
         [HttpGet("Friends/{friendUserName}")]
         public async Task<IActionResult> GetFriend(string friendUserName)
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
-            var friend = await _context.AspNetFriends.Include(e => e.FriendTo) 
-                                                    .Where(e => e.FriendFrom.Id == userId && 
-                                                    e.FriendTo.UserName == friendUserName &&
-                                                    e.IsConfirmed == true)
-                                                    .FirstOrDefaultAsync();
-
-            return StatusCode(200, new
+            try
             {
-                friend
-            });
+                var friend = await _context.AspNetFriends.Include(e => e.FriendTo) 
+                                                        .Where(e => e.FriendFrom.Id == userId && 
+                                                        e.FriendTo.UserName == friendUserName &&
+                                                        e.IsConfirmed == true)
+                                                        .FirstOrDefaultAsync();
+
+                if (friend == null)
+                    return NotFound();
+
+                return StatusCode(200, new
+                {
+                    friend
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, "Internal error:" + e.Message);
+            }
+            
         }
 
         [HttpGet("Friends/Requests")]
         public async Task<IActionResult> GetRequests()
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
-            var requests = await _context.AspNetFriends.Include(e => e.FriendFrom)
-                                                        .Where(e => e.FriendTo.Id == userId &&
-                                                        e.IsConfirmed == false)
-                                                        .ToListAsync();
-
-            return StatusCode(200, new
+            try
             {
-                requests
-            });
+                var requests = await _context.AspNetFriends.Include(e => e.FriendFrom)
+                                                            .Where(e => e.FriendTo.Id == userId &&
+                                                            e.IsConfirmed == false)
+                                                            .ToListAsync();
+
+                return StatusCode(200, new
+                {
+                    requests
+                });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, "Internal error:" + e.Message);
+            }
         }
 
         [HttpPost("Friends/{friendUserName}")]
         public async Task<IActionResult> AddFriend(string friendUserName)
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
+            try
+            {
+                var friendFrom = await _userManager.FindByIdAsync(userId);
+                var friendTo = await _userManager.FindByNameAsync(friendUserName);
 
-            var friendFrom = await _userManager.FindByIdAsync(userId);
-            var friendTo = await _userManager.FindByNameAsync(friendUserName);
+                if (friendTo == null)
+                    return StatusCode(404, "User not found");
 
-            var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
+                var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
 
-            var friendRequest = _context.AspNetFriends.Add(friendRequestObject);
-            await _context.SaveChangesAsync();
+                var friendRequest = _context.AspNetFriends.Add(friendRequestObject);
+                await _context.SaveChangesAsync();
 
-            return Ok();
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, "Internal error:" + e.Message);
+            }
+            
         }
 
         [HttpPost("Friends/Requests/{requestId}")]
         public async Task<IActionResult> AcceptRequest(int requestId)
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
-            
-            var pendingRequest = await _context.AspNetFriends.Include(e => e.FriendFrom)
-                                                            .Where(e => e.FriendTo.Id == userId &&
+            try
+            {
+                var pendingRequest = await _context.AspNetFriends.Include(e => e.FriendFrom)
+                                                                    .Where(e => e.FriendTo.Id == userId &&
                                                                     e.IsConfirmed == false &&
                                                                     e.Id == requestId)
                                                                     .FirstOrDefaultAsync();
-            pendingRequest.IsConfirmed = true;
-            _context.AspNetFriends.Update(pendingRequest);
+                if (pendingRequest == null)
+                    return NotFound();
 
-            var friendFrom = await _userManager.FindByIdAsync(userId);
-            var friendTo = await _userManager.FindByIdAsync(pendingRequest.FriendFrom.Id);
-            var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
-            friendRequestObject.IsConfirmed = true;
-            var friendRequest = _context.AspNetFriends.Add(friendRequestObject);
+                pendingRequest.IsConfirmed = true;
+                _context.AspNetFriends.Update(pendingRequest);
 
-            await _context.SaveChangesAsync();
+                var friendFrom = await _userManager.FindByIdAsync(userId);
+                var friendTo = await _userManager.FindByIdAsync(pendingRequest.FriendFrom.Id);
+                var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
+                friendRequestObject.IsConfirmed = true;
+                var friendRequest = _context.AspNetFriends.Add(friendRequestObject);
 
-            return Ok();
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, "Internal error:" + e.Message);
+            }
+        }
+
+        [HttpDelete("Friends/Requests/{requestId}")]
+        public async Task<IActionResult> DeleteRequest(int requestId)
+        {
+            var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
+            try
+            {
+                var request = await _context.AspNetFriends.Include(e => e.FriendFrom)
+                                                        .Where(e => e.FriendTo.Id == userId &&
+                                                        e.IsConfirmed == false &&
+                                                        e.Id == requestId)
+                                                        .FirstOrDefaultAsync();
+
+                if (request == null)
+                    return NotFound();
+
+                _context.AspNetFriends.Remove(request);
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, "Internal error:" + e.Message);
+            }
         }
     }
 }
