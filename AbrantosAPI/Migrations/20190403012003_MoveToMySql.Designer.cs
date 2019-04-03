@@ -3,28 +3,29 @@ using System;
 using AbrantosAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace AbrantosAPI.Migrations
 {
     [DbContext(typeof(AbrantosContext))]
-    [Migration("20190312010032_IdentitySetup")]
-    partial class IdentitySetup
+    [Migration("20190403012003_MoveToMySql")]
+    partial class MoveToMySql
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.SerialColumn)
                 .HasAnnotation("ProductVersion", "2.2.2-servicing-10034")
-                .HasAnnotation("Relational:MaxIdentifierLength", 63);
+                .HasAnnotation("Relational:MaxIdentifierLength", 128)
+                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
             modelBuilder.Entity("AbrantosAPI.Models.Register.DailyRegister", b =>
                 {
                     b.Property<long>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<long>("Abrantos");
 
@@ -37,6 +38,27 @@ namespace AbrantosAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("DailyRegister");
+                });
+
+            modelBuilder.Entity("AbrantosAPI.Models.User.AspNetFriends", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("FriendFromId");
+
+                    b.Property<string>("FriendToId");
+
+                    b.Property<bool>("IsConfirmed");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendFromId");
+
+                    b.HasIndex("FriendToId");
+
+                    b.ToTable("AspNetFriends");
                 });
 
             modelBuilder.Entity("AbrantosAPI.Models.User.Role", b =>
@@ -57,7 +79,8 @@ namespace AbrantosAPI.Migrations
 
                     b.HasIndex("NormalizedName")
                         .IsUnique()
-                        .HasName("RoleNameIndex");
+                        .HasName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles");
                 });
@@ -107,7 +130,8 @@ namespace AbrantosAPI.Migrations
 
                     b.HasIndex("NormalizedUserName")
                         .IsUnique()
-                        .HasName("UserNameIndex");
+                        .HasName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers");
                 });
@@ -115,7 +139,8 @@ namespace AbrantosAPI.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ClaimType");
 
@@ -134,7 +159,8 @@ namespace AbrantosAPI.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd();
+                        .ValueGeneratedOnAdd()
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("ClaimType");
 
@@ -152,11 +178,9 @@ namespace AbrantosAPI.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.Property<string>("LoginProvider")
-                        .HasMaxLength(128);
+                    b.Property<string>("LoginProvider");
 
-                    b.Property<string>("ProviderKey")
-                        .HasMaxLength(128);
+                    b.Property<string>("ProviderKey");
 
                     b.Property<string>("ProviderDisplayName");
 
@@ -187,11 +211,9 @@ namespace AbrantosAPI.Migrations
                 {
                     b.Property<string>("UserId");
 
-                    b.Property<string>("LoginProvider")
-                        .HasMaxLength(128);
+                    b.Property<string>("LoginProvider");
 
-                    b.Property<string>("Name")
-                        .HasMaxLength(128);
+                    b.Property<string>("Name");
 
                     b.Property<string>("Value");
 
@@ -205,6 +227,17 @@ namespace AbrantosAPI.Migrations
                     b.HasOne("AbrantosAPI.Models.User.User")
                         .WithMany("DailyRegisters")
                         .HasForeignKey("UserId");
+                });
+
+            modelBuilder.Entity("AbrantosAPI.Models.User.AspNetFriends", b =>
+                {
+                    b.HasOne("AbrantosAPI.Models.User.User", "FriendFrom")
+                        .WithMany()
+                        .HasForeignKey("FriendFromId");
+
+                    b.HasOne("AbrantosAPI.Models.User.User", "FriendTo")
+                        .WithMany()
+                        .HasForeignKey("FriendToId");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
