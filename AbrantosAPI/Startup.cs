@@ -76,7 +76,7 @@ namespace AbrantosAPI
             });
 
             services.AddDbContext<AbrantosContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(Environment.GetEnvironmentVariable("AbrantosConnectionString")));
 
             services.AddIdentity<User, Role>()
                     .AddEntityFrameworkStores<AbrantosContext>()
