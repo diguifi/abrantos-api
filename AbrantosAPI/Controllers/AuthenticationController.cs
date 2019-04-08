@@ -80,6 +80,9 @@ namespace AbrantosAPI.Controllers
             if (newUser.Password != newUser.PasswordConfirmation)
                 return StatusCode(400, "The passwords must match");
 
+            if (!new User().IsValidEmail(newUser.Email))
+                return StatusCode(400, "Invalid email format");
+
             var mappedUser = new User() {
                 UserName = newUser.UserName,
                 Email = newUser.Email
@@ -96,14 +99,11 @@ namespace AbrantosAPI.Controllers
                 {
                     return StatusCode(400, new
                     {
-                        mappedUser.UserName
+                        checkUserCreation.Errors
                     });
                 }
 
-                return StatusCode(200, new
-                {
-                    newUser
-                });
+                return Ok();
             }
             catch(NullReferenceException e)
             {
