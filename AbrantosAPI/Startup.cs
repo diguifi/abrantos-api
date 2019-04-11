@@ -75,8 +75,10 @@ namespace AbrantosAPI
                     .RequireAuthenticatedUser().Build());
             });
 
+            var teste = Environment.GetEnvironmentVariable("AbrantosConnectionString");
+
             services.AddDbContext<AbrantosContext>(options =>
-                options.UseSqlServer(Environment.GetEnvironmentVariable("AbrantosConnectionString")));
+                options.UseNpgsql(Environment.GetEnvironmentVariable("AbrantosConnectionString")));
 
             services.AddIdentity<User, Role>()
                     .AddEntityFrameworkStores<AbrantosContext>()
@@ -126,7 +128,7 @@ namespace AbrantosAPI
                 c.RoutePrefix = string.Empty;
             });
 
-            app.UseHttpsRedirection();
+            // app.UseHttpsRedirection();
             new IdentityInitializer(context, userManager, roleManager)
                 .Initialize().Wait();
             app.UseAuthentication();
