@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AbrantosAPI.Authentication;
 using AbrantosAPI.Data;
 using AbrantosAPI.Models.User;
+using AbrantosAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,13 +22,16 @@ namespace AbrantosAPI.Controllers
         private readonly AbrantosContext _context;
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly IEmailSender _emailSender;
         public AuthenticationController(AbrantosContext context,
                                         UserManager<User> userManager,
-                                        SignInManager<User> signInManager)
+                                        SignInManager<User> signInManager,
+                                        IEmailSender emailSender)
         {
             _context = context;
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailSender = emailSender;
         }
 
         [HttpGet("admins")]
@@ -40,28 +44,6 @@ namespace AbrantosAPI.Controllers
                 return StatusCode(200, new
                 {
                     admins
-                });
-            }
-            catch(NullReferenceException e)
-            {
-                return StatusCode(404, e.Message);
-            }
-            catch(Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
-        }
-
-        [HttpGet("users")]
-        public async Task<ActionResult> GetUsers()
-        {
-            try 
-            {
-                var users = await _userManager.GetUsersInRoleAsync("User");
-
-                return StatusCode(200, new
-                {
-                    users
                 });
             }
             catch(NullReferenceException e)
@@ -103,7 +85,16 @@ namespace AbrantosAPI.Controllers
                     });
                 }
 
-                return Ok();
+                var tokenConfirmEmail = await _userManager.GenerateEmailConfirmationTokenAsync(mappedUser);
+                var emailBuilder = new EmailBuilder("", "",
+                                            mappedUser.Id, 
+                                            tokenConfirmEmail);
+
+                await _emailSender.SendEmailAsync(mappedUser.Email,
+                                                    EmailBuilder.SubjectConfirmEmail,
+                                                    emailBuilder.GetEmailConfirmationMessage());
+
+                return StatusCode(200, "Please confirm your email.");
             }
             catch(NullReferenceException e)
             {
@@ -113,6 +104,26 @@ namespace AbrantosAPI.Controllers
             {
                 return StatusCode(500, e.Message);
             }
+        }
+
+        [HttpPost("confirmEmail")]
+        public async Task<IActionResult> ConfirmEmail(string token, string userId)
+        {
+            token = token.Replace(" ", "+");
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound();
+
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+
+            if (result.Succeeded)
+            {
+                return StatusCode(200, "Email confirmed!");
+            }
+
+            return StatusCode(400, new { result.Errors });
         }
 
         [AllowAnonymous]
@@ -125,9 +136,11 @@ namespace AbrantosAPI.Controllers
             bool validCredentials = false;
             var userInDB = await _userManager.FindByNameAsync(userDto.UserName);
             if (userInDB == null)
-            {
-                return StatusCode(404, "Usuer not found.");
-            }
+                return StatusCode(404, "User not found.");
+
+            if (!userInDB.EmailConfirmed)
+                return StatusCode(400, "Please confirm your email first.");
+
             var loginResult = await _signInManager
                 .CheckPasswordSignInAsync(userInDB, userDto.Password, false);
 
