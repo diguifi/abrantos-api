@@ -81,7 +81,10 @@ namespace AbrantosAPI
             services.AddDbContext<AbrantosContext>(options =>
                 options.UseNpgsql(Environment.GetEnvironmentVariable("AbrantosConnectionString")));
 
-            services.AddIdentity<User, Role>()
+            services.AddIdentity<User, Role>(options =>
+                    {
+                        options.User.RequireUniqueEmail = true;
+                    })
                     .AddEntityFrameworkStores<AbrantosContext>()
                     .AddDefaultTokenProviders();
 
