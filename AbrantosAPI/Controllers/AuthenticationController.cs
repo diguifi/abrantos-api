@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ using AbrantosAPI.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace AbrantosAPI.Controllers
@@ -88,7 +90,8 @@ namespace AbrantosAPI.Controllers
                 var tokenConfirmEmail = await _userManager.GenerateEmailConfirmationTokenAsync(mappedUser);
                 var emailBuilder = new EmailBuilder("", "",
                                             mappedUser.Id, 
-                                            tokenConfirmEmail);
+                                            tokenConfirmEmail,
+                                            "");
 
                 await _emailSender.SendEmailAsync(mappedUser.Email,
                                                     EmailBuilder.SubjectConfirmEmail,
@@ -121,6 +124,60 @@ namespace AbrantosAPI.Controllers
             if (result.Succeeded)
             {
                 return StatusCode(200, "Email confirmed!");
+            }
+
+            return StatusCode(400, new { result.Errors });
+        }
+
+        [HttpPost("recoverPassword")]
+        public async Task<ActionResult> RecoverPassword(string email)
+        {
+            try
+            {
+                var user = await _userManager.Users.FirstOrDefaultAsync(e => e.Email == email);
+                if (user == null)
+                    return NotFound();
+
+                var tokenResetPassword = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var emailBuilder = new EmailBuilder("", "",
+                                            user.Id,
+                                            "",
+                                            tokenResetPassword);
+
+                await _emailSender.SendEmailAsync(email,
+                                                EmailBuilder.SubjectConfirmEmail,
+                                                emailBuilder.GetPasswrodResetMessage());
+
+                return StatusCode(200, "A password recovery email has been sent.");
+            }
+            catch(NullReferenceException e)
+            {
+                return StatusCode(404, e.Message);
+            }
+            catch(Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
+        [HttpPost("resetPassword")]
+        public async Task<IActionResult> ResetPassword(string token, string userId, string newPassword, string newPasswordConfirmation)
+        {
+            token = token.Replace(" ", "+");
+
+            if (newPasswordConfirmation != newPassword)
+                return StatusCode(400, "The passwords must match");
+
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+                return NotFound();
+
+            var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
+
+            if (result.Succeeded)
+            {
+                return StatusCode(200, "Password changed!");
             }
 
             return StatusCode(400, new { result.Errors });

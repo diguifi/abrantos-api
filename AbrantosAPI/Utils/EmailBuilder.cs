@@ -19,19 +19,18 @@ namespace AbrantosAPI.Utils
             PasswordToken = passwordToken;
         }
 
-        public EmailBuilder(string scheme, string baseUrl, string userId, string emailToken)
-        {
-            Scheme = scheme;
-            BaseUrl = baseUrl;
-            UserId = userId;
-            EmailToken = emailToken;
-        }
-
         public string GetEmailConfirmationMessage()
         {
             return  $"<title>{SubjectConfirmEmail}</title><br>" +
                     $"Post this data for abrantos.azurewebsites.net/api/authentication/confirmEmail<br>" +
                     $"userId={UserId}<br>&token={EmailToken}";
+        }
+
+        public string GetPasswrodResetMessage()
+        {
+            return  $"<title>{SubjectRecoverPassword}</title><br>" +
+                    $"Post this data for abrantos.azurewebsites.net/api/authentication/recoverPassword<br>" +
+                    $"userId={UserId}<br>&token={PasswordToken}<br>&newPassword='yournewpassword'&newPasswordConfirmation='confirmation'";
         }
     }
 }
