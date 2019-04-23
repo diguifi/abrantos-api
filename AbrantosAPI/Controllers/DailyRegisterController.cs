@@ -84,7 +84,10 @@ namespace AbrantosAPI.Controllers
         public async Task<IActionResult> Create([FromBody] CreateDailyRegisterViewModel dailyRegister)
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
-            DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos, dailyRegister.Date, userId);
+            DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos,
+                                                                    dailyRegister.Date,
+                                                                    userId,
+                                                                    dailyRegister.Post);
 
             try
             {
@@ -97,6 +100,9 @@ namespace AbrantosAPI.Controllers
 
                 if ((mappedDailyRegister.Abrantos > 1000) || (mappedDailyRegister.Abrantos < -1000))
                     return StatusCode(400, "Abrantos only range from -1000 to 1000");
+
+                if (mappedDailyRegister.Post.Length > 140)
+                    return StatusCode(400, "Post can only have 140 characters");
 
                 _context.DailyRegister.Add(mappedDailyRegister);
                 await _context.SaveChangesAsync();
@@ -113,7 +119,10 @@ namespace AbrantosAPI.Controllers
         public async Task<IActionResult> Update(int id, [FromBody] UpdateDailyRegisterViewModel dailyRegister)
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
-            DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos, dailyRegister.Date, "");
+            DailyRegister mappedDailyRegister = new DailyRegister(dailyRegister.Abrantos,
+                                                                    dailyRegister.Date,
+                                                                    "",
+                                                                    dailyRegister.Post);
             mappedDailyRegister.Id = id;
 
             try
@@ -126,8 +135,12 @@ namespace AbrantosAPI.Controllers
                 if ((mappedDailyRegister.Abrantos > 1000) || (mappedDailyRegister.Abrantos < -1000))
                     return StatusCode(400, "Abrantos only range from -1000 to 1000");
 
+                if (mappedDailyRegister.Post.Length > 140)
+                    return StatusCode(400, "Post can only have 140 characters");
+
                 oldRegister.Abrantos = mappedDailyRegister.Abrantos;
                 oldRegister.Date = mappedDailyRegister.Date;
+                oldRegister.Post = mappedDailyRegister.Post;
                 _context.DailyRegister.Update(oldRegister);
                 await _context.SaveChangesAsync();
 

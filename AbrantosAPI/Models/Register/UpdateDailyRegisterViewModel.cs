@@ -6,5 +6,6 @@ namespace AbrantosAPI.Models.Register
     {
         public long Abrantos { get; set; }
         public DateTime Date { get; set; }
+        public string Post { get; set; }
     }
 }
