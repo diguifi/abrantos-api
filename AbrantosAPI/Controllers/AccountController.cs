@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AbrantosAPI.Data;
 using AbrantosAPI.Models.User;
+using MetraeSocial.Utils.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -29,14 +30,14 @@ namespace AbrantosAPI.Controllers
         }
         
         [HttpGet("Friends")]
-        public async Task<IActionResult> GetFriends()
+        public async Task<IActionResult> GetFriends(int page)
         {
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
                 var friends = await _context.AspNetFriends.Include(e => e.FriendTo) 
                                                         .Where(e => e.FriendFrom.Id == userId && e.IsConfirmed == true)
-                                                        .ToListAsync();
+                                                        .GetPagedAsync(page);
 
                 return StatusCode(200, new
                 {
