@@ -191,6 +191,10 @@ namespace AbrantosAPI.Controllers
             [FromServices]TokenConfigurations tokenConfigurations)
         {
             bool validCredentials = false;
+            
+            if (userDto.UserName == null || userDto.Password == null)
+                return StatusCode(400, "No username or password provided.");
+
             var userInDB = await _userManager.FindByNameAsync(userDto.UserName);
             if (userInDB == null)
                 return StatusCode(404, "User not found.");
