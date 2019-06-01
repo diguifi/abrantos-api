@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AbrantosAPI.Data;
 using AbrantosAPI.Models.User;
-using MetraeSocial.Utils.Pagination;
+using AbrantosAPI.Utils.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;

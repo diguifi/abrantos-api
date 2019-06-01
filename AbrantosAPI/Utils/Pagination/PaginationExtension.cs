@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 
-namespace MetraeSocial.Utils.Pagination
+namespace AbrantosAPI.Utils.Pagination
 {
     public static class PaginationExtension
     {

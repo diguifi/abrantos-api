@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MetraeSocial.Utils.Pagination
+namespace AbrantosAPI.Utils.Pagination
 {
     public abstract class PagedOutputBase
     {
