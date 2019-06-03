@@ -22,8 +22,8 @@ namespace AbrantosAPI.Utils
         public string GetEmailConfirmationMessage()
         {
             return  $"<title>{SubjectConfirmEmail}</title><br>" +
-                    $"Post this data for abrantos.azurewebsites.net/api/authentication/confirmEmail<br>" +
-                    $"userId={UserId}<br>&token={EmailToken}";
+                    $"Welcome to Abrantos, click the link below to confirm your email<br>" +
+                    $"<a href='https://diguifi.github.io/abrantos-vue/#/confirm?userId={UserId}&token={EmailToken}'>Confirm email</a>";
         }
 
         public string GetPasswrodResetMessage()

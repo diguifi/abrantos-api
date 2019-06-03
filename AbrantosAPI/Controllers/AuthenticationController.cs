@@ -36,28 +36,6 @@ namespace AbrantosAPI.Controllers
             _emailSender = emailSender;
         }
 
-        [HttpGet("admins")]
-        public async Task<ActionResult> GetAdmins()
-        {
-            try 
-            {
-                var admins = await _userManager.GetUsersInRoleAsync("Admin");
-
-                return StatusCode(200, new
-                {
-                    admins
-                });
-            }
-            catch(NullReferenceException e)
-            {
-                return StatusCode(404, e.Message);
-            }
-            catch(Exception e)
-            {
-                return StatusCode(500, e.Message);
-            }
-        }
-
         [HttpPost("register")]
         public async Task<ActionResult> Register([FromBody] CreateUserViewModel newUser)
         {
@@ -112,6 +90,9 @@ namespace AbrantosAPI.Controllers
         [HttpPost("confirmEmail")]
         public async Task<IActionResult> ConfirmEmail(string token, string userId)
         {
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userId))
+                return StatusCode(200, "Malformed request, params were null");
+
             token = token.Replace(" ", "+");
 
             var user = await _userManager.FindByIdAsync(userId);
@@ -192,7 +173,7 @@ namespace AbrantosAPI.Controllers
         {
             bool validCredentials = false;
             
-            if (userDto.UserName == null || userDto.Password == null)
+            if (string.IsNullOrEmpty(userDto.UserName) || string.IsNullOrEmpty(userDto.Password))
                 return StatusCode(400, "No username or password provided.");
 
             var userInDB = await _userManager.FindByNameAsync(userDto.UserName);
