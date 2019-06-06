@@ -40,10 +40,10 @@ namespace AbrantosAPI.Controllers
         public async Task<ActionResult> Register([FromBody] CreateUserViewModel newUser)
         {
             if (newUser.Password != newUser.PasswordConfirmation)
-                return StatusCode(400, "The passwords must match");
+                return StatusCode(400, "A senha e confirmação de senha precisam ser iguais");
 
             if (!new User().IsValidEmail(newUser.Email))
-                return StatusCode(400, "Invalid email format");
+                return StatusCode(400, "Formato de email inválido");
 
             var mappedUser = new User() {
                 UserName = newUser.UserName,
@@ -75,7 +75,7 @@ namespace AbrantosAPI.Controllers
                                                     EmailBuilder.SubjectConfirmEmail,
                                                     emailBuilder.GetEmailConfirmationMessage());
 
-                return StatusCode(200, "Please confirm your email.");
+                return StatusCode(200, "Por favor, confirme seu email antes de fazer login.");
             }
             catch(NullReferenceException e)
             {
@@ -91,7 +91,7 @@ namespace AbrantosAPI.Controllers
         public async Task<IActionResult> ConfirmEmail(string token, string userId)
         {
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(userId))
-                return StatusCode(200, "Malformed request, params were null");
+                return StatusCode(200, "A URL de confirmação está malformada, tente novamente");
 
             token = token.Replace(" ", "+");
 
@@ -104,7 +104,7 @@ namespace AbrantosAPI.Controllers
 
             if (result.Succeeded)
             {
-                return StatusCode(200, "Email confirmed!");
+                return StatusCode(200, "Email confirmado!");
             }
 
             return StatusCode(400, new { result.Errors });
@@ -129,7 +129,7 @@ namespace AbrantosAPI.Controllers
                                                 EmailBuilder.SubjectConfirmEmail,
                                                 emailBuilder.GetPasswrodResetMessage());
 
-                return StatusCode(200, "A password recovery email has been sent.");
+                return StatusCode(200, "Um email de recuperação de senha foi enviado.");
             }
             catch(NullReferenceException e)
             {
@@ -147,7 +147,7 @@ namespace AbrantosAPI.Controllers
             token = token.Replace(" ", "+");
 
             if (newPasswordConfirmation != newPassword)
-                return StatusCode(400, "The passwords must match");
+                return StatusCode(400, "A senha e confirmação de senha precisam ser iguais");
 
             var user = await _userManager.FindByIdAsync(userId);
 
@@ -158,7 +158,7 @@ namespace AbrantosAPI.Controllers
 
             if (result.Succeeded)
             {
-                return StatusCode(200, "Password changed!");
+                return StatusCode(200, "Senha atualizada");
             }
 
             return StatusCode(400, new { result.Errors });
@@ -174,21 +174,21 @@ namespace AbrantosAPI.Controllers
             bool validCredentials = false;
             
             if (string.IsNullOrEmpty(userDto.UserName) || string.IsNullOrEmpty(userDto.Password))
-                return StatusCode(400, "No username or password provided.");
+                return StatusCode(400, "Não foi inserido nome de usuário ou senha na tentativa de login");
 
             var userInDB = await _userManager.FindByNameAsync(userDto.UserName);
             if (userInDB == null)
-                return StatusCode(404, "User not found.");
+                return StatusCode(404, "Usuário não encontrado");
 
             if (!userInDB.EmailConfirmed)
-                return StatusCode(400, "Please confirm your email first.");
+                return StatusCode(400, "Confirme seu email antes de fazer login");
 
             var loginResult = await _signInManager
                 .CheckPasswordSignInAsync(userInDB, userDto.Password, false);
 
             if (!loginResult.Succeeded)
             {
-                return StatusCode(404, "Invalid credentials.");
+                return StatusCode(404, "Credenciais inválidas");
             }
             else 
             {
@@ -235,7 +235,7 @@ namespace AbrantosAPI.Controllers
             }
             else
             {
-                return StatusCode(404, "Invalid credentials.");
+                return StatusCode(404, "Credenciais inválidas");
             }
         }
     }

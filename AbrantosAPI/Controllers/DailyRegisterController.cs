@@ -96,13 +96,13 @@ namespace AbrantosAPI.Controllers
                                                                         (d.UserId == userId)).AnyAsync();
 
                 if (alreadyRegisteredToday)
-                    return StatusCode(400, "You already registered abrantos today");
+                    return StatusCode(400, "Você já registrou abrantos hoje");
 
                 if ((mappedDailyRegister.Abrantos > 1000) || (mappedDailyRegister.Abrantos < -1000))
-                    return StatusCode(400, "Abrantos only range from -1000 to 1000");
+                    return StatusCode(400, "Abrantos só vão de -1000 a 1000");
 
                 if (mappedDailyRegister.Post.Length > 140)
-                    return StatusCode(400, "Post can only have 140 characters");
+                    return StatusCode(400, "Um post pode ter no máximo 140 caracteres");
 
                 _context.DailyRegister.Add(mappedDailyRegister);
                 await _context.SaveChangesAsync();
@@ -133,10 +133,10 @@ namespace AbrantosAPI.Controllers
                     return NotFound();
 
                 if ((mappedDailyRegister.Abrantos > 1000) || (mappedDailyRegister.Abrantos < -1000))
-                    return StatusCode(400, "Abrantos only range from -1000 to 1000");
+                    return StatusCode(400, "Abrantos só vão de -1000 a 1000");
 
                 if (mappedDailyRegister.Post.Length > 140)
-                    return StatusCode(400, "Post can only have 140 characters");
+                    return StatusCode(400, "Um post pode ter no máximo 140 caracteres");
 
                 oldRegister.Abrantos = mappedDailyRegister.Abrantos;
                 oldRegister.Date = mappedDailyRegister.Date;

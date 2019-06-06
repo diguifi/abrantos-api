@@ -73,7 +73,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
             
         }
@@ -88,7 +88,7 @@ namespace AbrantosAPI.Controllers
                 var friendTo = await _userManager.FindByNameAsync(friendUserName);
 
                 if (friendTo == null)
-                    return StatusCode(404, "User not found");
+                    return StatusCode(404, "Usuário não encontrado");
 
                 var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
 
@@ -99,7 +99,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
             
         }
@@ -131,7 +131,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
             
         }
@@ -154,7 +154,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -187,7 +187,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -213,7 +213,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -235,7 +235,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
         }
 
@@ -261,7 +261,7 @@ namespace AbrantosAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(500, "Internal error:" + e.Message);
+                return StatusCode(500, e.Message);
             }
         }
     }

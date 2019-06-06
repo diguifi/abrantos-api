@@ -76,8 +76,6 @@ namespace AbrantosAPI
                     .RequireAuthenticatedUser().Build());
             });
 
-            var teste = Environment.GetEnvironmentVariable("AbrantosConnectionString");
-
             services.AddDbContext<AbrantosContext>(options =>
                 options.UseNpgsql(Environment.GetEnvironmentVariable("AbrantosConnectionString")));
 
@@ -86,7 +84,8 @@ namespace AbrantosAPI
                         options.User.RequireUniqueEmail = true;
                     })
                     .AddEntityFrameworkStores<AbrantosContext>()
-                    .AddDefaultTokenProviders();
+                    .AddDefaultTokenProviders()
+                    .AddErrorDescriber<PortugueseIdentityErrorDescriber>();
 
             services.AddSwaggerGen(c =>
             {
