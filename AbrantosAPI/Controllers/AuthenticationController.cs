@@ -173,10 +173,17 @@ namespace AbrantosAPI.Controllers
         {
             bool validCredentials = false;
             
-            if (string.IsNullOrEmpty(userDto.UserName) || string.IsNullOrEmpty(userDto.Password))
+            if (string.IsNullOrEmpty(userDto.UserNameOrEmail) || string.IsNullOrEmpty(userDto.Password))
                 return StatusCode(400, "Não foi inserido nome de usuário ou senha na tentativa de login");
 
-            var userInDB = await _userManager.FindByNameAsync(userDto.UserName);
+            var isEmail = new User().IsValidEmail(userDto.UserNameOrEmail);
+
+            var userInDB = new User();
+            if (isEmail)
+                userInDB = await _userManager.FindByEmailAsync(userDto.UserNameOrEmail);
+            else
+                userInDB = await _userManager.FindByNameAsync(userDto.UserNameOrEmail);
+            
             if (userInDB == null)
                 return StatusCode(404, "Usuário não encontrado");
 
