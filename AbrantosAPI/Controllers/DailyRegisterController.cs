@@ -80,6 +80,34 @@ namespace AbrantosAPI.Controllers
             }
         }
 
+        [HttpGet("date/{date}")]
+        public async Task<IActionResult> GetByDate(string date)
+        {
+            var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
+            try 
+            {
+                var mappedDate = DateTime.Parse(date).ToShortDateString();
+                var dailyRegister = await _context.DailyRegister.FirstOrDefaultAsync(e => (e.Date.ToShortDateString() == mappedDate) &&
+                                                                                    (e.UserId == userId));
+
+                if (dailyRegister == null)
+                    return NotFound();
+
+                return StatusCode(200, new
+                {
+                    dailyRegister
+                });
+            }
+            catch(KeyNotFoundException e)
+            {
+                return StatusCode(404, e.Message);
+            }
+            catch(Exception e)
+            {
+                return StatusCode(500, e.Message);
+            }
+        }
+
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateDailyRegisterViewModel dailyRegister)
         {
