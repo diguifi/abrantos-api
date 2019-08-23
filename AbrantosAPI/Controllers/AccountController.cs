@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AbrantosAPI.Data;
 using AbrantosAPI.Models.User;
+using AbrantosAPI.Services.Account;
 using AbrantosAPI.Utils.Pagination;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -17,13 +18,16 @@ namespace AbrantosAPI.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
+        private readonly IAccountService _accountService;
         private readonly AbrantosContext _context;
         private readonly UserManager<User> _userManager;
         private readonly IHttpContextAccessor _httpContext;
-        public AccountController(AbrantosContext context,
+        public AccountController(IAccountService accountService,
+                                    AbrantosContext context,
                                     UserManager<User> userManager,
                                     IHttpContextAccessor httpContext)
         {
+            _accountService = accountService;
             _context = context;
             _userManager = userManager;
             _httpContext = httpContext;
@@ -35,9 +39,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var friends = await _context.AspNetFriends.Include(e => e.FriendTo) 
-                                                        .Where(e => e.FriendFrom.Id == userId && e.IsConfirmed == true)
-                                                        .GetPagedAsync(page);
+                var friends = await _accountService.GetFriends(page, userId);
 
                 return StatusCode(200, new
                 {
