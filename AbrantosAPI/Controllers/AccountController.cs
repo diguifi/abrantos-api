@@ -19,17 +19,11 @@ namespace AbrantosAPI.Controllers
     public class AccountController : ControllerBase
     {
         private readonly IAccountService _accountService;
-        private readonly AbrantosContext _context;
-        private readonly UserManager<User> _userManager;
         private readonly IHttpContextAccessor _httpContext;
         public AccountController(IAccountService accountService,
-                                    AbrantosContext context,
-                                    UserManager<User> userManager,
                                     IHttpContextAccessor httpContext)
         {
             _accountService = accountService;
-            _context = context;
-            _userManager = userManager;
             _httpContext = httpContext;
         }
         
@@ -59,11 +53,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var friend = await _context.AspNetFriends.Include(e => e.FriendTo)
-                                                        .Where(e => e.FriendFrom.Id == userId && 
-                                                        e.FriendTo.UserName == friendUserName &&
-                                                        e.IsConfirmed == true)
-                                                        .FirstOrDefaultAsync();
+                var friend = await _accountService.GetFriend(userId, friendUserName);
 
                 if (friend == null)
                     return NotFound();
@@ -86,16 +76,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var friendFrom = await _userManager.FindByIdAsync(userId);
-                var friendTo = await _userManager.FindByNameAsync(friendUserName);
-
-                if (friendTo == null)
-                    return StatusCode(404, "Usuário não encontrado");
-
-                var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
-
-                var friendRequest = _context.AspNetFriends.Add(friendRequestObject);
-                await _context.SaveChangesAsync();
+                await _accountService.AddFriend(userId, friendUserName);
 
                 return Ok();
             }
@@ -112,22 +93,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var sentRequest = await _context.AspNetFriends.Where(e => e.FriendFrom.Id == userId && 
-                                                        e.FriendTo.UserName == friendUserName &&
-                                                        e.IsConfirmed == true)
-                                                        .FirstOrDefaultAsync();
-
-                var receivedRequest = await _context.AspNetFriends.Where(e => e.FriendTo.Id == userId && 
-                                                        e.FriendFrom.UserName == friendUserName &&
-                                                        e.IsConfirmed == true)
-                                                        .FirstOrDefaultAsync();
-
-                if (sentRequest == null || receivedRequest == null)
-                    return NotFound();
-
-                _context.AspNetFriends.Remove(sentRequest);
-                _context.AspNetFriends.Remove(receivedRequest);
-                await _context.SaveChangesAsync();
+                await _accountService.DeleteFriend(userId, friendUserName);
 
                 return Ok();
             }
@@ -144,10 +110,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var requests = await _context.AspNetFriends.Include(e => e.FriendFrom)
-                                                            .Where(e => e.FriendTo.Id == userId &&
-                                                            e.IsConfirmed == false)
-                                                            .ToListAsync();
+                var requests = await _accountService.GetReceivedRequests(userId);
 
                 return StatusCode(200, new
                 {
@@ -166,24 +129,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var pendingRequest = await _context.AspNetFriends.Include(e => e.FriendFrom)
-                                                                    .Where(e => e.FriendTo.Id == userId &&
-                                                                    e.IsConfirmed == false &&
-                                                                    e.Id == requestId)
-                                                                    .FirstOrDefaultAsync();
-                if (pendingRequest == null)
-                    return NotFound();
-
-                pendingRequest.IsConfirmed = true;
-                _context.AspNetFriends.Update(pendingRequest);
-
-                var friendFrom = await _userManager.FindByIdAsync(userId);
-                var friendTo = await _userManager.FindByIdAsync(pendingRequest.FriendFrom.Id);
-                var friendRequestObject = new AspNetFriends(friendFrom, friendTo);
-                friendRequestObject.IsConfirmed = true;
-                var friendRequest = _context.AspNetFriends.Add(friendRequestObject);
-
-                await _context.SaveChangesAsync();
+                await _accountService.AcceptReceivedRequest(userId, requestId);
 
                 return Ok();
             }
@@ -199,17 +145,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var request = await _context.AspNetFriends.Include(e => e.FriendFrom)
-                                                        .Where(e => e.FriendTo.Id == userId &&
-                                                        e.IsConfirmed == false &&
-                                                        e.Id == requestId)
-                                                        .FirstOrDefaultAsync();
-
-                if (request == null)
-                    return NotFound();
-
-                _context.AspNetFriends.Remove(request);
-                await _context.SaveChangesAsync();
+                await _accountService.DeleteReceivedRequest(userId, requestId);
 
                 return Ok();
             }
@@ -225,10 +161,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var requests = await _context.AspNetFriends.Include(e => e.FriendTo)
-                                                            .Where(e => e.FriendFrom.Id == userId &&
-                                                            e.IsConfirmed == false)
-                                                            .ToListAsync();
+                var requests = await _accountService.GetSentRequests(userId);
 
                 return StatusCode(200, new
                 {
@@ -247,17 +180,7 @@ namespace AbrantosAPI.Controllers
             var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "userid").Value;
             try
             {
-                var request = await _context.AspNetFriends.Include(e => e.FriendTo)
-                                                        .Where(e => e.FriendFrom.Id == userId &&
-                                                        e.IsConfirmed == false &&
-                                                        e.Id == requestId)
-                                                        .FirstOrDefaultAsync();
-
-                if (request == null)
-                    return NotFound();
-
-                _context.AspNetFriends.Remove(request);
-                await _context.SaveChangesAsync();
+                await _accountService.DeleteSentRequest(userId, requestId);
 
                 return Ok();
             }
